@@ -450,15 +450,13 @@ export const openTrade = async (
     league = 'Standard';
   }
 
-  // In Electron, proxy Tencent trade requests through the main process to bypass CORS
+  // For Tencent in Electron: POST via proxy (with cookie auth) to get a search ID,
+  // then open the /{leagueId}/{searchId} URL in the system browser (already logged in).
   if (platform === 'Tencent' && typeof window !== 'undefined' && window.electronAPI?.isElectron) {
     const query = constructQuery(jewel, conqueror, results);
     const result = await window.electronAPI.tradeSearch(league, query);
     if (result.id) {
-      window.open(
-        `https://poe.game.qq.com/trade/search/${encodeURIComponent(league)}/${result.id}`,
-        '_blank'
-      );
+      window.open(`https://poe.game.qq.com/trade/search/${league}/${result.id}`, '_blank');
     } else {
       console.error('Trade search failed:', result.error);
     }
@@ -472,6 +470,5 @@ export const openTrade = async (
   const url = new URL(`https://${host}/trade/search${platformPath}/${league}`);
   url.searchParams.set('q', JSON.stringify(constructQuery(jewel, conqueror, results)));
 
-  console.log('opening trade', url.toString());
   window.open(url.toString(), '_blank');
 };
