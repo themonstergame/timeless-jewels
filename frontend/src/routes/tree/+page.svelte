@@ -475,6 +475,7 @@
   ];
 
   let settingsOpen = false;
+  let leagueMenuOpen = false;
 
   let platform = platforms.find((p) => p.value === localStorage.getItem('platform')) || platforms[0];
   $: localStorage.setItem('platform', platform.value);
@@ -745,7 +746,7 @@
             </button>
 
             {#if settingsOpen}
-              <button class="fixed inset-0 z-10" on:click={() => (settingsOpen = false)} />
+              <button class="fixed inset-0 z-10" on:click={() => { settingsOpen = false; leagueMenuOpen = false; }} />
               <div
                 class="absolute right-0 top-full mt-1 bg-neutral-950 border border-white/10 rounded shadow-xl z-20 p-3 min-w-[200px] flex flex-col gap-3">
                 <div>
@@ -768,23 +769,34 @@
                 </div>
                 <div>
                   <p class="text-xs text-gray-500 mb-1.5">{$_('League')}</p>
-                  {#if platform.value === 'Tencent'}
-                    <select
-                      class="w-full bg-neutral-800 border border-white/10 rounded px-2 py-0.5 text-xs text-gray-200 focus:outline-none focus:border-white/30"
-                      bind:value={tencentLeague}>
-                      {#each tencentLeagueOptions as opt}
-                        <option value={opt}>{opt}</option>
-                      {/each}
-                    </select>
-                  {:else}
-                    <select
-                      class="w-full bg-neutral-800 border border-white/10 rounded px-2 py-0.5 text-xs text-gray-200 focus:outline-none focus:border-white/30"
-                      bind:value={leagueInput}>
-                      {#each leagueOptions as opt}
-                        <option value={opt}>{opt}</option>
-                      {/each}
-                    </select>
-                  {/if}
+                  <div class="relative">
+                    <button
+                      class="w-full flex items-center justify-between bg-neutral-800 border border-white/10 rounded px-2 py-1 text-xs text-gray-200 hover:border-white/25 transition-colors"
+                      on:click|stopPropagation={() => (leagueMenuOpen = !leagueMenuOpen)}>
+                      <span>{platform.value === 'Tencent' ? tencentLeague || '…' : leagueInput || '…'}</span>
+                      <svg class="w-3 h-3 text-gray-500 transition-transform {leagueMenuOpen ? 'rotate-180' : ''}" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                    {#if leagueMenuOpen}
+                      <div class="absolute left-0 top-full mt-0.5 w-full bg-neutral-900 border border-white/10 rounded shadow-xl z-30 py-0.5 max-h-48 overflow-y-auto">
+                        {#each (platform.value === 'Tencent' ? tencentLeagueOptions : leagueOptions) as opt}
+                          <button
+                            class="w-full px-3 py-1.5 text-xs text-left flex items-center justify-between hover:bg-white/5 transition-colors {(platform.value === 'Tencent' ? tencentLeague : leagueInput) === opt ? 'text-orange-400' : 'text-gray-300'}"
+                            on:click|stopPropagation={() => {
+                              if (platform.value === 'Tencent') tencentLeague = opt;
+                              else leagueInput = opt;
+                              leagueMenuOpen = false;
+                            }}>
+                            {opt}
+                            {#if (platform.value === 'Tencent' ? tencentLeague : leagueInput) === opt}
+                              <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                            {/if}
+                          </button>
+                        {/each}
+                      </div>
+                    {/if}
+                  </div>
                 </div>
                 <div>
                   <p class="text-xs text-gray-500 mb-1.5">{$_('Language')}</p>
