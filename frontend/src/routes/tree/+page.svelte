@@ -543,13 +543,21 @@
     window.electronAPI?.setCookie(toCookieValue(tencentCookie));
   };
 
-  // Setup overlay: shown in Electron on first launch or when no platform saved
+  // Setup overlay
   let showSetup =
     typeof window !== 'undefined' &&
     !!window.electronAPI?.isElectron &&
     !localStorage.getItem('electron-setup-done');
   let setupPlatform = platform;
   let setupCookie = '';
+  let setupMessage = '';
+
+  const openSetup = () => {
+    setupPlatform = platform;
+    setupCookie = tencentCookie;
+    setupMessage = '';
+    showSetup = true;
+  };
 
   const completeSetup = async () => {
     platform = setupPlatform;
@@ -563,13 +571,29 @@
     getLeagues();
   };
 
-  onMount(() => {
+  onMount(async () => {
     if (window.electronAPI?.isElectron) {
-      window.electronAPI.getCookie().then((c) => {
-        tencentCookie = fromCookieValue(c);
-      });
-    }
-    if (!showSetup) {
+      const savedCookie = await window.electronAPI.getCookie();
+      tencentCookie = fromCookieValue(savedCookie);
+
+      // Validate cookie for Tencent platform on startup
+      if (platform.value === 'Tencent' && localStorage.getItem('electron-setup-done')) {
+        const result = await window.electronAPI.getLeagues();
+        if (Array.isArray(result)) {
+          tencentLeagueOptions = result;
+          if (!result.includes(tencentLeague) && result.length > 0) {
+            tencentLeague = result[0];
+          }
+        } else {
+          setupMessage = 'Cookie 已失效，请重新设置';
+          setupCookie = tencentCookie;
+          showSetup = true;
+          return;
+        }
+      } else if (!showSetup) {
+        getLeagues();
+      }
+    } else if (!showSetup) {
       getLeagues();
     }
   });
@@ -579,8 +603,13 @@
 
 {#if showSetup}
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-    <div class="bg-neutral-900 border border-white/10 rounded-xl shadow-2xl p-8 w-96 flex flex-col gap-5">
+    <div class="bg-neutral-900 border border-white/10 rounded-xl shadow-2xl p-8 w-[560px] flex flex-col gap-5">
       <h2 class="text-white text-lg font-semibold">{$_('Platform')}</h2>
+
+      {#if setupMessage}
+        <p class="text-sm text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded px-3 py-2">{setupMessage}</p>
+      {/if}
+
       <div class="flex gap-2 flex-wrap">
         {#each platforms as p}
           <button
@@ -714,43 +743,30 @@
                 <div>
                   <p class="text-xs text-gray-500 mb-1.5">{$_('League')}</p>
                   {#if platform.value === 'Tencent'}
-                    <input
-                      type="text"
-                      list="tencent-leagues"
+                    <select
                       class="w-full bg-neutral-800 border border-white/10 rounded px-2 py-0.5 text-xs text-gray-200 focus:outline-none focus:border-white/30"
-                      bind:value={tencentLeague}
-                      placeholder="S29赛季" />
-                    <datalist id="tencent-leagues">
+                      bind:value={tencentLeague}>
                       {#each tencentLeagueOptions as opt}
-                        <option value={opt} />
+                        <option value={opt}>{opt}</option>
                       {/each}
-                    </datalist>
+                    </select>
                   {:else}
-                    <input
-                      type="text"
-                      list="pc-leagues"
+                    <select
                       class="w-full bg-neutral-800 border border-white/10 rounded px-2 py-0.5 text-xs text-gray-200 focus:outline-none focus:border-white/30"
-                      bind:value={leagueInput}
-                      placeholder="Standard" />
-                    <datalist id="pc-leagues">
+                      bind:value={leagueInput}>
                       {#each leagueOptions as opt}
-                        <option value={opt} />
+                        <option value={opt}>{opt}</option>
                       {/each}
-                    </datalist>
+                    </select>
                   {/if}
                 </div>
-                {#if platform.value === 'Tencent' && window.electronAPI?.isElectron}
+                {#if window.electronAPI?.isElectron}
                   <div>
-                    <p class="text-xs text-gray-500 mb-1.5">Cookie</p>
-                    <div class="flex items-center bg-neutral-800 border border-white/10 rounded overflow-hidden focus-within:border-white/30">
-                      <span class="px-2 py-0.5 text-xs text-gray-500 bg-neutral-700 border-r border-white/10 select-none shrink-0">POESESSID=</span>
-                      <input
-                        type="text"
-                        class="flex-1 min-w-0 px-2 py-0.5 bg-transparent text-xs text-gray-200 focus:outline-none"
-                        bind:value={tencentCookie}
-                        placeholder="xxxxxxxxxxxxxxxx"
-                        on:change={saveCookie} />
-                    </div>
+                    <button
+                      class="w-full text-xs px-2 py-1 rounded border border-white/10 text-gray-400 hover:bg-white/10 transition-colors"
+                      on:click={() => { settingsOpen = false; openSetup(); }}>
+                      {$_('Platform')} / Cookie 设置
+                    </button>
                   </div>
                 {/if}
                 <div>
