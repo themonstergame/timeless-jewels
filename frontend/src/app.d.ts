@@ -15,6 +15,7 @@ interface ElectronAPI {
   getCookie(): Promise<string>;
   setCookie(cookie: string): Promise<void>;
   tradeSearch(league: string, query: object): Promise<{ id?: string; error?: string }>;
+  getLeagues(): Promise<string[] | { error: string }>;
 }
 
 declare global {

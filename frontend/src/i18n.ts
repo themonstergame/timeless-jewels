@@ -7,5 +7,7 @@ addMessages('zh', locales.zh);
 
 init({
   fallbackLocale: 'en',
-  initialLocale: getLocaleFromNavigator()
+  initialLocale:
+    (typeof localStorage !== 'undefined' && localStorage.getItem('locale')) ||
+    getLocaleFromNavigator()
 });

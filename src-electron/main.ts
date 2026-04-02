@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, net, shell } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { proxyTrade } from './proxy';
@@ -56,6 +56,26 @@ app.whenReady().then(() => {
   ipcMain.handle('trade-search', async (_, league: string, query: object) => {
     const cookie = loadSettings().tencent_cookie ?? '';
     return await proxyTrade(league, query, cookie);
+  });
+
+  ipcMain.handle('get-leagues', async () => {
+    const cookie = loadSettings().tencent_cookie ?? '';
+    try {
+      const response = await net.fetch(
+        'https://poe.game.qq.com/api/leagues?type=main&realm=pc',
+        {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            Origin: 'https://poe.game.qq.com',
+            ...(cookie ? { Cookie: cookie } : {}),
+          },
+        }
+      );
+      const json = (await response.json()) as Array<{ id: string; name?: string }>;
+      return json.map((l) => l.name ?? l.id);
+    } catch (err) {
+      return { error: String(err) };
+    }
   });
 
   createWindow();

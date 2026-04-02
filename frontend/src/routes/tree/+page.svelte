@@ -487,15 +487,32 @@
   let leagues: { value: string; label: string }[] = [];
   let league: { value: string; label: string } | undefined;
 
+  const PC_LEAGUE_DEFAULTS = ['Standard', 'Hardcore'];
+  let tencentLeagueOptions: string[] = [];
+
   const getLeagues = async () => {
-    const response = await fetch('https://api.poe.watch/leagues');
-    const responseJson: Array<{ name: string }> = await response.json();
-    const fetched = responseJson.map((l: { name: string }) => l.name);
-    leagueOptions = [...new Set([...PC_LEAGUE_DEFAULTS, ...fetched])];
-    leagues = leagueOptions.map((name) => ({ value: name, label: $_(name) }));
-    const saved = localStorage.getItem('league');
-    leagueInput = (saved && leagueOptions.includes(saved)) ? saved : leagueOptions[0];
-    league = leagues.find((l) => l.value === leagueInput) || leagues[0];
+    if (platform.value === 'Tencent' && window.electronAPI?.isElectron) {
+      const result = await window.electronAPI.getLeagues();
+      if (Array.isArray(result)) {
+        tencentLeagueOptions = result;
+        if (!result.includes(tencentLeague) && result.length > 0) {
+          tencentLeague = result[0];
+        }
+      }
+    } else if (platform.value !== 'Tencent') {
+      try {
+        const response = await fetch('https://api.poe.watch/leagues');
+        const responseJson: Array<{ name: string }> = await response.json();
+        const fetched = responseJson.map((l: { name: string }) => l.name);
+        leagueOptions = [...new Set([...PC_LEAGUE_DEFAULTS, ...fetched])];
+      } catch {
+        leagueOptions = PC_LEAGUE_DEFAULTS;
+      }
+      leagues = leagueOptions.map((name) => ({ value: name, label: $_(name) }));
+      const saved = localStorage.getItem('league');
+      leagueInput = (saved && leagueOptions.includes(saved)) ? saved : leagueOptions[0];
+      league = leagues.find((l) => l.value === leagueInput) || leagues[0];
+    }
   };
 
   $: if (platform.value !== 'Tencent') {
@@ -503,14 +520,7 @@
     league = { value: leagueInput, label: leagueInput };
   }
 
-  // For Tencent, league name is user-provided (QQ API requires auth, can't fetch from browser)
-  const TENCENT_LEAGUE_OPTIONS = [
-    'S29赛季',
-    'S29赛季（专家）',
-    '永久',
-    '永久（专家）',
-  ];
-  let tencentLeague: string = localStorage.getItem('tencent-league') || 'S29赛季';
+  let tencentLeague: string = localStorage.getItem('tencent-league') || '';
   $: if (platform.value === 'Tencent') {
     localStorage.setItem('tencent-league', tencentLeague);
   }
@@ -524,17 +534,78 @@
     window.electronAPI?.setCookie(tencentCookie);
   };
 
-  onMount(() => {
+  // Setup overlay: shown in Electron on first launch or when no platform saved
+  let showSetup =
+    typeof window !== 'undefined' &&
+    !!window.electronAPI?.isElectron &&
+    !localStorage.getItem('electron-setup-done');
+  let setupPlatform = platform;
+  let setupCookie = '';
+
+  const completeSetup = async () => {
+    platform = setupPlatform;
+    localStorage.setItem('platform', platform.value);
+    if (platform.value === 'Tencent' && setupCookie) {
+      await window.electronAPI!.setCookie(setupCookie);
+      tencentCookie = setupCookie;
+    }
+    localStorage.setItem('electron-setup-done', '1');
+    showSetup = false;
     getLeagues();
+  };
+
+  onMount(() => {
     if (window.electronAPI?.isElectron) {
       window.electronAPI.getCookie().then((c) => {
         tencentCookie = c;
       });
     }
+    if (!showSetup) {
+      getLeagues();
+    }
   });
 </script>
 
 <svelte:window on:paste={onPaste} />
+
+{#if showSetup}
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div class="bg-neutral-900 border border-white/10 rounded-xl shadow-2xl p-6 w-80 flex flex-col gap-4">
+      <h2 class="text-white text-base font-semibold">{$_('Platform')}</h2>
+      <div class="flex gap-2 flex-wrap">
+        {#each platforms as p}
+          <button
+            class="text-xs px-3 py-1 rounded transition-colors {setupPlatform.value === p.value
+              ? 'bg-orange-600/70 text-white'
+              : 'bg-white/10 text-gray-400 hover:bg-white/20'}"
+            on:click={() => (setupPlatform = p)}>
+            {p.label}
+          </button>
+        {/each}
+      </div>
+
+      {#if setupPlatform.value === 'Tencent'}
+        <div class="flex flex-col gap-1.5">
+          <p class="text-xs text-gray-400">Cookie</p>
+          <input
+            type="password"
+            class="w-full bg-neutral-800 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-white/30"
+            bind:value={setupCookie}
+            placeholder="POESESSID=xxxxxxxxxxxxxxxx" />
+          <p class="text-xs text-gray-600">
+            从 poe.game.qq.com 登录后获取
+          </p>
+        </div>
+      {/if}
+
+      <button
+        class="mt-1 py-1.5 rounded bg-orange-600/70 hover:bg-orange-600/90 text-white text-sm transition-colors"
+        on:click={completeSetup}>
+        {$_('Config')}完成
+      </button>
+    </div>
+  </div>
+{/if}
 
 <SkillTree
   {clickNode}
@@ -612,6 +683,7 @@
                           : 'bg-white/10 text-gray-400 hover:bg-white/20'}"
                         on:click={() => {
                           platform = p;
+                          getLeagues();
                           updateUrl();
                         }}>
                         {p.label}
@@ -629,7 +701,7 @@
                       bind:value={tencentLeague}
                       placeholder="S29赛季" />
                     <datalist id="tencent-leagues">
-                      {#each TENCENT_LEAGUE_OPTIONS as opt}
+                      {#each tencentLeagueOptions as opt}
                         <option value={opt} />
                       {/each}
                     </datalist>

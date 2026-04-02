@@ -6,4 +6,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setCookie: (cookie: string): Promise<void> => ipcRenderer.invoke('set-cookie', cookie),
   tradeSearch: (league: string, query: object): Promise<{ id?: string; error?: string }> =>
     ipcRenderer.invoke('trade-search', league, query),
+  getLeagues: (): Promise<string[] | { error: string }> =>
+    ipcRenderer.invoke('get-leagues'),
 });
