@@ -1,3 +1,4 @@
+import { browser } from '$app/environment';
 import { addMessages, getLocaleFromNavigator, init } from 'svelte-i18n';
 
 import locales from './locales.json';
@@ -7,7 +8,5 @@ addMessages('zh', locales.zh);
 
 init({
   fallbackLocale: 'en',
-  initialLocale:
-    (typeof localStorage !== 'undefined' && localStorage.getItem('locale')) ||
-    getLocaleFromNavigator()
+  initialLocale: (browser && localStorage.getItem('locale')) || getLocaleFromNavigator()
 });
