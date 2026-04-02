@@ -35,7 +35,15 @@ function createWindow() {
     return { action: 'deny' };
   });
 
-  win.loadFile(path.join(__dirname, '../frontend/build/tree/index.html'));
+  if (process.env.ELECTRON_DEV === '1') {
+    // Retry until Vite dev server is ready
+    const tryLoad = () => {
+      win.loadURL('http://localhost:5173/tree').catch(() => setTimeout(tryLoad, 500));
+    };
+    tryLoad();
+  } else {
+    win.loadFile(path.join(__dirname, '../frontend/build/tree/index.html'));
+  }
 }
 
 app.whenReady().then(() => {

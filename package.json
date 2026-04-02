@@ -5,14 +5,17 @@
   "main": "dist-electron/main.js",
   "private": true,
   "scripts": {
+    "dev": "bun run build:electron && ELECTRON_DEV=1 electron .",
+    "dev": "bun run build:electron && concurrently -k -n vite,electron \"cd frontend && bun run dev\" \"ELECTRON_DEV=1 electron .\"",
     "build:frontend": "cd frontend && bun install && bun run build",
     "build:electron": "tsc --project src-electron/tsconfig.json",
     "dist:mac": "bun run build:frontend && bun run build:electron && electron-builder --mac --universal",
     "dist:win": "bun run build:frontend && bun run build:electron && electron-builder --win --x64",
-    "start": "electron ."
+    "start": "bun run build:frontend && bun run build:electron && electron ."
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "concurrently": "^9.2.1",
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0",
     "typescript": "^5.2.0"
@@ -28,11 +31,17 @@
       "output": "dist"
     },
     "mac": {
-      "target": [{ "target": "dmg", "arch": ["universal"] }],
+      "target": [{
+        "target": "dmg",
+        "arch": ["universal"]
+      }],
       "category": "public.app-category.games"
     },
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }]
+      "target": [{
+        "target": "nsis",
+        "arch": ["x64"]
+      }]
     },
     "nsis": {
       "oneClick": false,
