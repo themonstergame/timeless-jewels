@@ -552,11 +552,25 @@
   let setupPlatform = platform;
   let setupCookie = '';
   let setupMessage = '';
+  let cookieTestState: 'idle' | 'testing' | 'ok' | 'fail' = 'idle';
+
+  const testCookie = async () => {
+    cookieTestState = 'testing';
+    // Temporarily save the cookie to test it via the IPC proxy
+    await window.electronAPI!.setCookie(toCookieValue(setupCookie));
+    const result = await window.electronAPI!.getLeagues();
+    if (Array.isArray(result) && result.length > 0) {
+      cookieTestState = 'ok';
+    } else {
+      cookieTestState = 'fail';
+    }
+  };
 
   const openSetup = () => {
     setupPlatform = platform;
     setupCookie = tencentCookie;
     setupMessage = '';
+    cookieTestState = 'idle';
     showSetup = true;
   };
 
@@ -626,13 +640,33 @@
       {#if setupPlatform.value === 'Tencent'}
         <div class="flex flex-col gap-2">
           <p class="text-sm text-gray-400">Cookie</p>
-          <div class="flex items-center bg-neutral-800 border border-white/10 rounded overflow-hidden focus-within:border-white/30">
-            <span class="px-3 py-2 text-sm text-gray-500 bg-neutral-700 border-r border-white/10 select-none shrink-0">POESESSID=</span>
-            <input
-              type="text"
-              class="flex-1 min-w-0 px-3 py-2 bg-transparent text-sm text-gray-200 focus:outline-none"
-              bind:value={setupCookie}
-              placeholder="xxxxxxxxxxxxxxxx" />
+          <div class="flex items-center gap-2">
+            <div class="flex-1 flex items-center bg-neutral-800 border border-white/10 rounded overflow-hidden focus-within:border-white/30">
+              <span class="px-3 py-2 text-sm text-gray-400 bg-neutral-700 border-r border-white/10 select-none shrink-0">POESESSID=</span>
+              <input
+                type="text"
+                class="flex-1 min-w-0 px-3 py-2 bg-transparent text-sm text-gray-200 focus:outline-none"
+                bind:value={setupCookie}
+                on:input={() => (cookieTestState = 'idle')}
+                placeholder="xxxxxxxxxxxxxxxx" />
+            </div>
+            <button
+              class="shrink-0 px-3 py-2 text-sm rounded border transition-colors whitespace-nowrap
+                {cookieTestState === 'ok' ? 'border-green-500/50 text-green-400 bg-green-500/10' :
+                 cookieTestState === 'fail' ? 'border-red-500/50 text-red-400 bg-red-500/10' :
+                 'border-white/10 text-gray-400 hover:bg-white/10'}"
+              disabled={cookieTestState === 'testing' || !setupCookie}
+              on:click={testCookie}>
+              {#if cookieTestState === 'testing'}
+                …
+              {:else if cookieTestState === 'ok'}
+                ✓ 有效
+              {:else if cookieTestState === 'fail'}
+                ✗ 无效
+              {:else}
+                测试
+              {/if}
+            </button>
           </div>
           <p class="text-xs text-gray-500">
             登录
