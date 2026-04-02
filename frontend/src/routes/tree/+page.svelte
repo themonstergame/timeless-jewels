@@ -475,16 +475,45 @@
   let platform = platforms.find((p) => p.value === localStorage.getItem('platform')) || platforms[0];
   $: localStorage.setItem('platform', platform.value);
 
+  const PC_LEAGUE_DEFAULTS = ['Standard', 'Hardcore'];
+  let leagueInput: string = localStorage.getItem('league') || 'Standard';
+  let leagueOptions: string[] = PC_LEAGUE_DEFAULTS;
+
+  // Keep legacy league/leagues for any remaining references
   let leagues: { value: string; label: string }[] = [];
   let league: { value: string; label: string } | undefined;
+
   const getLeagues = async () => {
     const response = await fetch('https://api.poe.watch/leagues');
-    const responseJson = await response.json();
-    leagues = responseJson.map((l: { name: string }) => ({ value: l.name, label: $_(l.name) }));
-    league = leagues.find((l) => l.value === localStorage.getItem('league')) || leagues[0];
+    const responseJson: Array<{ name: string }> = await response.json();
+    const fetched = responseJson.map((l: { name: string }) => l.name);
+    leagueOptions = [...new Set([...PC_LEAGUE_DEFAULTS, ...fetched])];
+    leagues = leagueOptions.map((name) => ({ value: name, label: $_(name) }));
+    const saved = localStorage.getItem('league');
+    leagueInput = (saved && leagueOptions.includes(saved)) ? saved : leagueOptions[0];
+    league = leagues.find((l) => l.value === leagueInput) || leagues[0];
   };
 
+  $: if (platform.value !== 'Tencent') {
+    localStorage.setItem('league', leagueInput);
+    league = { value: leagueInput, label: leagueInput };
+  }
+
+  // For Tencent, league name is user-provided (QQ API requires auth, can't fetch from browser)
+  const TENCENT_LEAGUE_OPTIONS = [
+    'S29赛季',
+    'S29赛季（专家）',
+    '永久',
+    '永久（专家）',
+  ];
+  let tencentLeague: string = localStorage.getItem('tencent-league') || 'S29赛季';
+  $: if (platform.value === 'Tencent') {
+    localStorage.setItem('tencent-league', tencentLeague);
+  }
+
   $: league && localStorage.setItem('league', league.value);
+
+  $: effectiveLeague = platform.value === 'Tencent' ? tencentLeague : leagueInput;
 
   onMount(() => {
     getLeagues();
@@ -541,7 +570,7 @@
               {platform.label}
               <span class="text-gray-600 mx-0.5">·</span>
               <span class="text-gray-600">{$_('League')}:</span>
-              {league?.label ?? '...'}
+              {effectiveLeague}
               <span class="text-gray-600 mx-0.5">·</span>
               {currentLocale === 'zh' ? '中文' : 'EN'}
               <svg
@@ -578,17 +607,31 @@
                 </div>
                 <div>
                   <p class="text-xs text-gray-500 mb-1.5">{$_('League')}</p>
-                  <select
-                    class="w-full cursor-pointer"
-                    value={league?.value}
-                    on:change={(e) => {
-                      league = leagues.find((l) => l.value === e.currentTarget.value);
-                      updateUrl();
-                    }}>
-                    {#each leagues as l}
-                      <option value={l.value}>{l.label}</option>
-                    {/each}
-                  </select>
+                  {#if platform.value === 'Tencent'}
+                    <input
+                      type="text"
+                      list="tencent-leagues"
+                      class="w-full bg-neutral-800 border border-white/10 rounded px-2 py-0.5 text-xs text-gray-200 focus:outline-none focus:border-white/30"
+                      bind:value={tencentLeague}
+                      placeholder="S29赛季" />
+                    <datalist id="tencent-leagues">
+                      {#each TENCENT_LEAGUE_OPTIONS as opt}
+                        <option value={opt} />
+                      {/each}
+                    </datalist>
+                  {:else}
+                    <input
+                      type="text"
+                      list="pc-leagues"
+                      class="w-full bg-neutral-800 border border-white/10 rounded px-2 py-0.5 text-xs text-gray-200 focus:outline-none focus:border-white/30"
+                      bind:value={leagueInput}
+                      placeholder="Standard" />
+                    <datalist id="pc-leagues">
+                      {#each leagueOptions as opt}
+                        <option value={opt} />
+                      {/each}
+                    </datalist>
+                  {/if}
                 </div>
                 <div>
                   <p class="text-xs text-gray-500 mb-1.5">{$_('Language')}</p>
@@ -854,7 +897,7 @@
                         searchConqueror,
                         tradeBatches[tradeBatchIndex],
                         platform.value,
-                        league.value
+                        effectiveLeague
                       )}>
                     {$_('Trade')}
                     {tradeBatchIndex * TRADE_BATCH_SIZE + 1}–{Math.min(
@@ -880,7 +923,8 @@
             jewel={searchJewel}
             conqueror={searchConqueror}
             platform={platform.value}
-            league={league.value} />
+            league={effectiveLeague}
+            selectedSeed={seed} />
         {/if}
       </div>
     </div>
