@@ -487,7 +487,6 @@
   let leagues: { value: string; label: string }[] = [];
   let league: { value: string; label: string } | undefined;
 
-  const PC_LEAGUE_DEFAULTS = ['Standard', 'Hardcore'];
   let tencentLeagueOptions: string[] = [];
 
   const getLeagues = async () => {
