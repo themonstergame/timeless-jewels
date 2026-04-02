@@ -22,10 +22,10 @@ export async function proxyTrade(
     });
 
     const json = (await response.json()) as { id?: string; error?: string };
-    if (json.id) {
-      return { id: json.id };
+    if (!json.id) {
+      return { error: json.error ?? `HTTP ${response.status}` };
     }
-    return { error: json.error ?? `HTTP ${response.status}` };
+    return { id: json.id };
   } catch (err) {
     return { error: String(err) };
   }

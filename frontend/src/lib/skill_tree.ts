@@ -399,7 +399,7 @@ export const constructQuery = (jewel: number, conqueror: string, result: SearchW
   if (result.length === 1) {
     return {
       query: {
-        status: { option: 'online' },
+        status: { option: 'any' },
         stats: [
           {
             type: 'count',
@@ -419,7 +419,7 @@ export const constructQuery = (jewel: number, conqueror: string, result: SearchW
 
   return {
     query: {
-      status: { option: 'online' },
+      status: { option: 'any' },
       stats: [
         {
           type: 'count',
@@ -455,9 +455,10 @@ export const openTrade = async (
   if (platform === 'Tencent' && typeof window !== 'undefined' && window.electronAPI?.isElectron) {
     const query = constructQuery(jewel, conqueror, results);
     const result = await window.electronAPI.tradeSearch(league, query);
-    console.log('[trade] league:', league, 'query:', JSON.stringify(query), 'result:', result);
     if (result.id) {
-      window.open(`https://poe.game.qq.com/trade/search/${league}/${result.id}`, '_blank');
+      const tradeUrl = `https://poe.game.qq.com/trade/search/${encodeURIComponent(league)}/${result.id}`;
+      console.log('[trade] opening url:', tradeUrl);
+      window.open(tradeUrl, '_blank');
     } else {
       console.error('Trade search failed:', result.error);
     }
