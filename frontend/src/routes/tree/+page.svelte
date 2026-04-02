@@ -654,12 +654,18 @@
             on:click={() => (showSetup = false)}>
             取消
           </button>
+          <button
+            class="flex-1 py-2 rounded bg-orange-600/70 hover:bg-orange-600/90 text-white text-sm transition-colors"
+            on:click={completeSetup}>
+            保存
+          </button>
+        {:else}
+          <button
+            class="flex-1 py-2 rounded bg-orange-600/70 hover:bg-orange-600/90 text-white text-sm transition-colors"
+            on:click={completeSetup}>
+            开始
+          </button>
         {/if}
-        <button
-          class="flex-1 py-2 rounded bg-orange-600/70 hover:bg-orange-600/90 text-white text-sm transition-colors"
-          on:click={completeSetup}>
-          开始
-        </button>
       </div>
     </div>
   </div>
