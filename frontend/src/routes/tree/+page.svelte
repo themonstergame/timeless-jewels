@@ -714,7 +714,7 @@
           <div class="flex items-center gap-1">
             {#if window.electronAPI?.isElectron}
               <button
-                class="w-7 h-7 flex items-center justify-center rounded text-gray-500 hover:text-white hover:bg-white/10 transition-colors"
+                class="w-7 h-7 flex items-center justify-center rounded text-gray-500 hover:text-white hover:bg-white/10 transition-colors mr-4"
                 title="Platform / Cookie 设置"
                 on:click={openSetup}>
                 <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
