@@ -450,21 +450,6 @@ export const openTrade = async (
     league = 'Standard';
   }
 
-  // For Tencent in Electron: POST via proxy (with cookie auth) to get a search ID,
-  // then open the /{leagueId}/{searchId} URL in the system browser (already logged in).
-  if (platform === 'Tencent' && typeof window !== 'undefined' && window.electronAPI?.isElectron) {
-    const query = constructQuery(jewel, conqueror, results);
-    const result = await window.electronAPI.tradeSearch(league, query);
-    if (result.id) {
-      const tradeUrl = `https://poe.game.qq.com/trade/search/${encodeURIComponent(league)}/${result.id}`;
-      console.log('[trade] opening url:', tradeUrl);
-      window.open(tradeUrl, '_blank');
-    } else {
-      console.error('Trade search failed:', result.error);
-    }
-    return;
-  }
-
   const host = platform === 'Tencent' ? 'poe.game.qq.com' : 'www.pathofexile.com';
   const isPC = platform === 'PC' || platform === 'Tencent';
   const platformPath = isPC ? '' : `/${platform.toLowerCase()}`;

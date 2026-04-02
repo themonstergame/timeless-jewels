@@ -58,7 +58,7 @@ app.whenReady().then(() => {
     return await proxyTrade(league, query, cookie);
   });
 
-ipcMain.handle('get-leagues', async () => {
+  ipcMain.handle('get-leagues', async () => {
     const cookie = loadSettings().tencent_cookie ?? '';
     try {
       const response = await net.fetch(
