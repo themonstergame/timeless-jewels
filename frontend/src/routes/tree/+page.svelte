@@ -645,7 +645,7 @@
               <span class="px-3 py-2 text-sm text-gray-400 bg-neutral-700 border-r border-white/10 select-none shrink-0">POESESSID=</span>
               <input
                 type="text"
-                class="flex-1 min-w-0 px-3 py-2 bg-transparent text-sm text-gray-200 focus:outline-none"
+                class="cookie-input flex-1 min-w-0 px-3 py-2 bg-transparent text-sm text-gray-200 focus:outline-none"
                 bind:value={setupCookie}
                 on:input={() => (cookieTestState = 'idle')}
                 placeholder="xxxxxxxxxxxxxxxx" />
@@ -1146,6 +1146,10 @@
 </SkillTree>
 
 <style lang="postcss">
+  .cookie-input:focus {
+    border-color: transparent !important;
+  }
+
   .stat-input {
     height: 22px;
     width: 60px;
