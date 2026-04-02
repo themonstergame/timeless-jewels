@@ -528,9 +528,19 @@
 
   $: effectiveLeague = platform.value === 'Tencent' ? tencentLeague : leagueInput;
 
+  // Cookie is stored as "POESESSID=<value>"; display shows only the value part.
+  // Accepts input with or without the "POESESSID=" prefix.
+  const COOKIE_PREFIX = 'POESESSID=';
+  const toCookieValue = (input: string) => {
+    const id = input.startsWith(COOKIE_PREFIX) ? input.slice(COOKIE_PREFIX.length) : input;
+    return id ? `${COOKIE_PREFIX}${id}` : '';
+  };
+  const fromCookieValue = (stored: string) =>
+    stored.startsWith(COOKIE_PREFIX) ? stored.slice(COOKIE_PREFIX.length) : stored;
+
   let tencentCookie = '';
   const saveCookie = () => {
-    window.electronAPI?.setCookie(tencentCookie);
+    window.electronAPI?.setCookie(toCookieValue(tencentCookie));
   };
 
   // Setup overlay: shown in Electron on first launch or when no platform saved
@@ -545,8 +555,8 @@
     platform = setupPlatform;
     localStorage.setItem('platform', platform.value);
     if (platform.value === 'Tencent' && setupCookie) {
-      await window.electronAPI!.setCookie(setupCookie);
-      tencentCookie = setupCookie;
+      await window.electronAPI!.setCookie(toCookieValue(setupCookie));
+      tencentCookie = fromCookieValue(toCookieValue(setupCookie));
     }
     localStorage.setItem('electron-setup-done', '1');
     showSetup = false;
@@ -556,7 +566,7 @@
   onMount(() => {
     if (window.electronAPI?.isElectron) {
       window.electronAPI.getCookie().then((c) => {
-        tencentCookie = c;
+        tencentCookie = fromCookieValue(c);
       });
     }
     if (!showSetup) {
@@ -586,11 +596,14 @@
       {#if setupPlatform.value === 'Tencent'}
         <div class="flex flex-col gap-2">
           <p class="text-sm text-gray-400">Cookie</p>
-          <input
-            type="password"
-            class="w-full bg-neutral-800 border border-white/10 rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-white/30"
-            bind:value={setupCookie}
-            placeholder="POESESSID=xxxxxxxxxxxxxxxx" />
+          <div class="flex items-center bg-neutral-800 border border-white/10 rounded overflow-hidden focus-within:border-white/30">
+            <span class="px-3 py-2 text-sm text-gray-500 bg-neutral-700 border-r border-white/10 select-none shrink-0">POESESSID=</span>
+            <input
+              type="text"
+              class="flex-1 min-w-0 px-3 py-2 bg-transparent text-sm text-gray-200 focus:outline-none"
+              bind:value={setupCookie}
+              placeholder="xxxxxxxxxxxxxxxx" />
+          </div>
           <p class="text-xs text-gray-500">
             登录
             <a
@@ -608,7 +621,7 @@
       <button
         class="py-2 rounded bg-orange-600/70 hover:bg-orange-600/90 text-white text-sm transition-colors"
         on:click={completeSetup}>
-        完成
+        开始
       </button>
     </div>
   </div>
@@ -729,12 +742,15 @@
                 {#if platform.value === 'Tencent' && window.electronAPI?.isElectron}
                   <div>
                     <p class="text-xs text-gray-500 mb-1.5">Cookie</p>
-                    <input
-                      type="password"
-                      class="w-full bg-neutral-800 border border-white/10 rounded px-2 py-0.5 text-xs text-gray-200 focus:outline-none focus:border-white/30"
-                      bind:value={tencentCookie}
-                      placeholder="POESESSID=xxxxxxxxxxxxxxxx"
-                      on:change={saveCookie} />
+                    <div class="flex items-center bg-neutral-800 border border-white/10 rounded overflow-hidden focus-within:border-white/30">
+                      <span class="px-2 py-0.5 text-xs text-gray-500 bg-neutral-700 border-r border-white/10 select-none shrink-0">POESESSID=</span>
+                      <input
+                        type="text"
+                        class="flex-1 min-w-0 px-2 py-0.5 bg-transparent text-xs text-gray-200 focus:outline-none"
+                        bind:value={tencentCookie}
+                        placeholder="xxxxxxxxxxxxxxxx"
+                        on:change={saveCookie} />
+                    </div>
                   </div>
                 {/if}
                 <div>
