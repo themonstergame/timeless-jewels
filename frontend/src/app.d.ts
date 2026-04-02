@@ -10,7 +10,18 @@ declare namespace App {
   // interface Stuff {}
 }
 
+interface ElectronAPI {
+  isElectron: true;
+  getCookie(): Promise<string>;
+  setCookie(cookie: string): Promise<void>;
+  tradeSearch(league: string, query: object): Promise<{ id?: string; error?: string }>;
+}
+
 declare global {
+  interface Window {
+    electronAPI?: ElectronAPI;
+  }
+
   function Calculate(passiveID: number, seed: number, jewelType: number, conqueror: string);
 
   const TimelessJewelSeedRanges: Record<number, { min: number; max: number }>;

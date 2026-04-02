@@ -435,19 +435,34 @@ export const constructQuery = (jewel: number, conqueror: string, result: SearchW
 
 export const TRADE_BATCH_SIZE = 10;
 
-export const openTrade = (
+export const openTrade = async (
   jewel: number,
   conqueror: string,
   results: SearchWithSeed[],
   platform: string,
   league: string
-) => {
+): Promise<void> => {
   if (!platform || typeof platform !== 'string') {
     platform = 'PC';
   }
 
   if (!league || typeof league !== 'string') {
     league = 'Standard';
+  }
+
+  // In Electron, proxy Tencent trade requests through the main process to bypass CORS
+  if (platform === 'Tencent' && typeof window !== 'undefined' && window.electronAPI?.isElectron) {
+    const query = constructQuery(jewel, conqueror, results);
+    const result = await window.electronAPI.tradeSearch(league, query);
+    if (result.id) {
+      window.open(
+        `https://poe.game.qq.com/trade/search/${encodeURIComponent(league)}/${result.id}`,
+        '_blank'
+      );
+    } else {
+      console.error('Trade search failed:', result.error);
+    }
+    return;
   }
 
   const host = platform === 'Tencent' ? 'poe.game.qq.com' : 'www.pathofexile.com';

@@ -1,0 +1,42 @@
+{
+  "name": "timeless-jewels",
+  "version": "1.0.0",
+  "description": "Timeless Jewels Calculator",
+  "main": "dist-electron/main.js",
+  "private": true,
+  "scripts": {
+    "build:frontend": "cd frontend && bun install && bun run build",
+    "build:electron": "tsc --project src-electron/tsconfig.json",
+    "dist:mac": "bun run build:frontend && bun run build:electron && electron-builder --mac --universal",
+    "dist:win": "bun run build:frontend && bun run build:electron && electron-builder --win --x64",
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "typescript": "^5.2.0"
+  },
+  "build": {
+    "appId": "dev.timeless-jewels",
+    "productName": "Timeless Jewels",
+    "files": [
+      "dist-electron/**",
+      "frontend/build/**"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "mac": {
+      "target": [{ "target": "dmg", "arch": ["universal"] }],
+      "category": "public.app-category.games"
+    },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

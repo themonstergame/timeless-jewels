@@ -95,6 +95,10 @@
   let mode = searchParams.has('mode') ? searchParams.get('mode') : '';
 
   const updateUrl = () => {
+    // file:// protocol (Electron) doesn't support SvelteKit's goto()
+    if (window.electronAPI?.isElectron) {
+      return;
+    }
     const url = new URL(window.location.origin + window.location.pathname);
     selectedJewel && url.searchParams.append('jewel', selectedJewel.value.toString());
     selectedConqueror && url.searchParams.append('conqueror', selectedConqueror.value);
@@ -515,8 +519,18 @@
 
   $: effectiveLeague = platform.value === 'Tencent' ? tencentLeague : leagueInput;
 
+  let tencentCookie = '';
+  const saveCookie = () => {
+    window.electronAPI?.setCookie(tencentCookie);
+  };
+
   onMount(() => {
     getLeagues();
+    if (window.electronAPI?.isElectron) {
+      window.electronAPI.getCookie().then((c) => {
+        tencentCookie = c;
+      });
+    }
   });
 </script>
 
@@ -633,6 +647,17 @@
                     </datalist>
                   {/if}
                 </div>
+                {#if platform.value === 'Tencent' && window.electronAPI?.isElectron}
+                  <div>
+                    <p class="text-xs text-gray-500 mb-1.5">Cookie</p>
+                    <input
+                      type="password"
+                      class="w-full bg-neutral-800 border border-white/10 rounded px-2 py-0.5 text-xs text-gray-200 focus:outline-none focus:border-white/30"
+                      bind:value={tencentCookie}
+                      placeholder="POESESSID=xxxxxxxxxxxxxxxx"
+                      on:change={saveCookie} />
+                  </div>
+                {/if}
                 <div>
                   <p class="text-xs text-gray-500 mb-1.5">{$_('Language')}</p>
                   <div class="flex gap-1">

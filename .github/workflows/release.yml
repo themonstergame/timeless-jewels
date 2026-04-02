@@ -9,33 +9,64 @@ env:
   GO_VERSION: "1.21.0"
 
 jobs:
-  release:
-    name: Release
-    runs-on: ubuntu-latest
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check out
-        uses: actions/checkout@v2
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - uses: oven-sh/setup-bun@v2
 
-      - name: Build wasm
+      - name: Build WASM
         run: go build -ldflags="-s -w" -v -o frontend/static/calculator.wasm ./wasm
         env:
           GOOS: js
           GOARCH: wasm
 
-      - name: Build frontend
-        working-directory: frontend
-        run: |
-          bun install
-          bun run build
-          ls -lah build
+      - name: Install root dependencies
+        run: bun install
 
-      - uses: peaceiris/actions-gh-pages@v4
+      - name: Build and package
+        run: bun run dist:mac
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./frontend/build
-          exclude_assets: ""
+          files: dist/*.dmg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Build WASM
+        run: go build -ldflags="-s -w" -v -o frontend/static/calculator.wasm ./wasm
+        env:
+          GOOS: js
+          GOARCH: wasm
+
+      - name: Install root dependencies
+        run: bun install
+
+      - name: Build and package
+        run: bun run dist:win
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
