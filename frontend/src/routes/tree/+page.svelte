@@ -1146,6 +1146,7 @@
 </SkillTree>
 
 <style lang="postcss">
+  .cookie-input:hover,
   .cookie-input:focus {
     border-color: transparent !important;
   }
