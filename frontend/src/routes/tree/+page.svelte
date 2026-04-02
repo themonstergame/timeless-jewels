@@ -569,12 +569,12 @@
 
 {#if showSetup}
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-    <div class="bg-neutral-900 border border-white/10 rounded-xl shadow-2xl p-6 w-80 flex flex-col gap-4">
-      <h2 class="text-white text-base font-semibold">{$_('Platform')}</h2>
+    <div class="bg-neutral-900 border border-white/10 rounded-xl shadow-2xl p-8 w-96 flex flex-col gap-5">
+      <h2 class="text-white text-lg font-semibold">{$_('Platform')}</h2>
       <div class="flex gap-2 flex-wrap">
         {#each platforms as p}
           <button
-            class="text-xs px-3 py-1 rounded transition-colors {setupPlatform.value === p.value
+            class="text-sm px-4 py-1.5 rounded transition-colors {setupPlatform.value === p.value
               ? 'bg-orange-600/70 text-white'
               : 'bg-white/10 text-gray-400 hover:bg-white/20'}"
             on:click={() => (setupPlatform = p)}>
@@ -584,23 +584,31 @@
       </div>
 
       {#if setupPlatform.value === 'Tencent'}
-        <div class="flex flex-col gap-1.5">
-          <p class="text-xs text-gray-400">Cookie</p>
+        <div class="flex flex-col gap-2">
+          <p class="text-sm text-gray-400">Cookie</p>
           <input
             type="password"
-            class="w-full bg-neutral-800 border border-white/10 rounded px-2 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-white/30"
+            class="w-full bg-neutral-800 border border-white/10 rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-white/30"
             bind:value={setupCookie}
             placeholder="POESESSID=xxxxxxxxxxxxxxxx" />
-          <p class="text-xs text-gray-600">
-            从 poe.game.qq.com 登录后获取
+          <p class="text-xs text-gray-500">
+            登录
+            <a
+              href="https://poe.game.qq.com"
+              target="_blank"
+              rel="noopener"
+              class="text-orange-400 hover:underline">
+              poe.game.qq.com
+            </a>
+            后从 Cookie 中获取
           </p>
         </div>
       {/if}
 
       <button
-        class="mt-1 py-1.5 rounded bg-orange-600/70 hover:bg-orange-600/90 text-white text-sm transition-colors"
+        class="py-2 rounded bg-orange-600/70 hover:bg-orange-600/90 text-white text-sm transition-colors"
         on:click={completeSetup}>
-        {$_('Config')}完成
+        完成
       </button>
     </div>
   </div>
