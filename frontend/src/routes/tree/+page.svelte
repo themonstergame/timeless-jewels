@@ -705,13 +705,36 @@
             </div>
           </div>
 
-          <div class="relative">
+          <div class="flex items-center gap-1">
+            {#if window.electronAPI?.isElectron}
+              <button
+                class="w-7 h-7 flex items-center justify-center rounded text-gray-500 hover:text-white hover:bg-white/10 transition-colors"
+                title="Platform / Cookie 设置"
+                on:click={openSetup}>
+                <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            {/if}
+            <div class="relative text-xs">
             <button
-              class="w-7 h-7 flex items-center justify-center rounded text-gray-400 hover:text-white hover:bg-white/10 transition-colors {settingsOpen ? 'text-white bg-white/10' : ''}"
-              title="Settings"
+              class="flex items-center gap-1 text-gray-400 hover:text-gray-200 transition-colors"
               on:click={() => (settingsOpen = !settingsOpen)}>
-              <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+              <span class="text-gray-600">{$_('Platform')}:</span>
+              {platform.label}
+              <span class="text-gray-600 mx-0.5">·</span>
+              <span class="text-gray-600">{$_('League')}:</span>
+              {effectiveLeague}
+              <span class="text-gray-600 mx-0.5">·</span>
+              {currentLocale === 'zh' ? '中文' : 'EN'}
+              <svg
+                class="w-3 h-3 text-gray-600 ml-0.5 transition-transform {settingsOpen ? 'rotate-180' : ''}"
+                viewBox="0 0 20 20"
+                fill="currentColor">
+                <path
+                  fill-rule="evenodd"
+                  d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                  clip-rule="evenodd" />
               </svg>
             </button>
 
@@ -757,15 +780,6 @@
                     </select>
                   {/if}
                 </div>
-                {#if window.electronAPI?.isElectron}
-                  <div>
-                    <button
-                      class="w-full text-xs px-2 py-1 rounded border border-white/10 text-gray-400 hover:bg-white/10 transition-colors"
-                      on:click={() => { settingsOpen = false; openSetup(); }}>
-                      {$_('Platform')} / Cookie 设置
-                    </button>
-                  </div>
-                {/if}
                 <div>
                   <p class="text-xs text-gray-500 mb-1.5">{$_('Language')}</p>
                   <div class="flex gap-1">
@@ -785,6 +799,7 @@
                 </div>
               </div>
             {/if}
+            </div>
           </div>
         </div>
 
