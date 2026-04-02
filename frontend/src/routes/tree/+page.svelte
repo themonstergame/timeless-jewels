@@ -488,15 +488,15 @@
   let leagues: { value: string; label: string }[] = [];
   let league: { value: string; label: string } | undefined;
 
-  let tencentLeagueOptions: string[] = [];
+  let tencentLeagueOptions: Array<{ id: string; label: string }> = [];
 
   const getLeagues = async () => {
     if (platform.value === 'Tencent' && window.electronAPI?.isElectron) {
       const result = await window.electronAPI.getLeagues();
       if (Array.isArray(result)) {
         tencentLeagueOptions = result;
-        if (!result.includes(tencentLeague) && result.length > 0) {
-          tencentLeague = result[0];
+        if (!result.some((l) => l.id === tencentLeague) && result.length > 0) {
+          tencentLeague = result[0].id;
         }
       }
     } else if (platform.value !== 'Tencent') {
@@ -528,6 +528,9 @@
   $: league && localStorage.setItem('league', league.value);
 
   $: effectiveLeague = platform.value === 'Tencent' ? tencentLeague : leagueInput;
+  $: effectiveLeagueLabel = platform.value === 'Tencent'
+    ? (tencentLeagueOptions.find((l) => l.id === tencentLeague)?.label || tencentLeague)
+    : leagueInput;
 
   // Cookie is stored as "POESESSID=<value>"; display shows only the value part.
   // Accepts input with or without the "POESESSID=" prefix.
@@ -596,8 +599,8 @@
         const result = await window.electronAPI.getLeagues();
         if (Array.isArray(result)) {
           tencentLeagueOptions = result;
-          if (!result.includes(tencentLeague) && result.length > 0) {
-            tencentLeague = result[0];
+          if (!result.some((l) => l.id === tencentLeague) && result.length > 0) {
+            tencentLeague = result[0].id;
           }
         } else {
           setupMessage = 'Cookie 已失效，请重新设置';
@@ -765,7 +768,7 @@
               {platform.label}
               <span class="text-gray-600 mx-0.5">·</span>
               <span class="text-gray-600">{$_('League')}:</span>
-              {effectiveLeague}
+              {effectiveLeagueLabel}
               <span class="text-gray-600 mx-0.5">·</span>
               {currentLocale === 'zh' ? '中文' : 'EN'}
               <svg
@@ -807,27 +810,40 @@
                     <button
                       class="w-full flex items-center justify-between bg-neutral-800 border border-white/10 rounded px-2 py-1 text-xs text-gray-200 hover:border-white/25 transition-colors"
                       on:click|stopPropagation={() => (leagueMenuOpen = !leagueMenuOpen)}>
-                      <span>{platform.value === 'Tencent' ? tencentLeague || '…' : leagueInput || '…'}</span>
+                      <span>
+                        {platform.value === 'Tencent'
+                          ? (tencentLeagueOptions.find((l) => l.id === tencentLeague)?.label || tencentLeague || '…')
+                          : leagueInput || '…'}
+                      </span>
                       <svg class="w-3 h-3 text-gray-500 transition-transform {leagueMenuOpen ? 'rotate-180' : ''}" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
                       </svg>
                     </button>
                     {#if leagueMenuOpen}
                       <div class="absolute left-0 top-full mt-0.5 w-full bg-neutral-900 border border-white/10 rounded shadow-xl z-30 py-0.5 max-h-48 overflow-y-auto">
-                        {#each (platform.value === 'Tencent' ? tencentLeagueOptions : leagueOptions) as opt}
-                          <button
-                            class="w-full px-3 py-1.5 text-xs text-left flex items-center justify-between hover:bg-white/5 transition-colors {(platform.value === 'Tencent' ? tencentLeague : leagueInput) === opt ? 'text-orange-400' : 'text-gray-300'}"
-                            on:click|stopPropagation={() => {
-                              if (platform.value === 'Tencent') tencentLeague = opt;
-                              else leagueInput = opt;
-                              leagueMenuOpen = false;
-                            }}>
-                            {opt}
-                            {#if (platform.value === 'Tencent' ? tencentLeague : leagueInput) === opt}
-                              <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                            {/if}
-                          </button>
-                        {/each}
+                        {#if platform.value === 'Tencent'}
+                          {#each tencentLeagueOptions as opt}
+                            <button
+                              class="w-full px-3 py-1.5 text-xs text-left flex items-center justify-between hover:bg-white/5 transition-colors {tencentLeague === opt.id ? 'text-orange-400' : 'text-gray-300'}"
+                              on:click|stopPropagation={() => { tencentLeague = opt.id; leagueMenuOpen = false; }}>
+                              {opt.label}
+                              {#if tencentLeague === opt.id}
+                                <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                              {/if}
+                            </button>
+                          {/each}
+                        {:else}
+                          {#each leagueOptions as opt}
+                            <button
+                              class="w-full px-3 py-1.5 text-xs text-left flex items-center justify-between hover:bg-white/5 transition-colors {leagueInput === opt ? 'text-orange-400' : 'text-gray-300'}"
+                              on:click|stopPropagation={() => { leagueInput = opt; leagueMenuOpen = false; }}>
+                              {opt}
+                              {#if leagueInput === opt}
+                                <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                              {/if}
+                            </button>
+                          {/each}
+                        {/if}
                       </div>
                     {/if}
                   </div>

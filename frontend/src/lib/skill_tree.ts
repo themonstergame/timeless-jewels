@@ -455,6 +455,7 @@ export const openTrade = async (
   if (platform === 'Tencent' && typeof window !== 'undefined' && window.electronAPI?.isElectron) {
     const query = constructQuery(jewel, conqueror, results);
     const result = await window.electronAPI.tradeSearch(league, query);
+    console.log('[trade] league:', league, 'query:', JSON.stringify(query), 'result:', result);
     if (result.id) {
       window.open(`https://poe.game.qq.com/trade/search/${league}/${result.id}`, '_blank');
     } else {

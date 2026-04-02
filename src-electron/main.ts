@@ -72,7 +72,7 @@ app.whenReady().then(() => {
         }
       );
       const json = (await response.json()) as Array<{ id: string; name?: string }>;
-      return json.map((l) => l.name ?? l.id);
+      return json.map((l) => ({ id: l.id, label: l.name ?? l.id }));
     } catch (err) {
       return { error: String(err) };
     }
